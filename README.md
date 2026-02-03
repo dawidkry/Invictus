@@ -31,3 +31,32 @@ The Surgeon: A deep-scan module that dissects PE (Portable Executable) headers a
 Windows 10/11 (with Admin privileges)
 
 Python 3.10+
+
+2. Setup
+Bash
+# Clone the fortress
+git clone https://github.com/YourUsername/Invictus-AI.git
+
+# Enter the directory
+cd Invictus-AI
+
+# Install the arsenal
+pip install -r requirements.txt
+3. Deployment
+To launch the Invictus Shield:
+
+Bash
+python invictus.py
+📋 Roadmap
+[ ] Implement YARA rule integration for industry-standard scanning.
+
+[ ] Add a Cloud-Sandbox for safe file detonation.
+
+[ ] Develop a "Quarantine Zone" for isolating suspicious .dll files.
+
+[ ] Full GUI implementation using PyQt6.
+
+⚖️ License
+Distributed under the MIT License. See LICENSE for more information.
+
+Developed by Dawid Krynicki | The Future of Autonomous Defense
