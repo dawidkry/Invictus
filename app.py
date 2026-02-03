@@ -38,9 +38,8 @@ def run_web_app():
 
 # --- 3. THE TERMINAL ENGINE (Stealth Mode) ---
 def run_local_engine():
-    # If there is no 'stdin' (keyboard), we kill this function immediately
-    # This is the "Silver Bullet" for Streamlit Cloud
-    if not sys.stdin.isatty():
+    # If there is no keyboard (stdin), exit immediately to prevent cloud hanging
+    if not sys.stdin or not sys.stdin.isatty():
         return
 
     try:
@@ -53,7 +52,6 @@ def run_local_engine():
     print("1. Scan Folder | 2. Live Shield")
     
     try:
-        # Standard input is now safe because we checked for a TTY/keyboard above
         mode = input("\nSelect Mode > ")
         if mode == "1":
             path = input("Enter path: ")
@@ -79,9 +77,13 @@ def run_local_engine():
         pass
 
 # --- 4. THE ULTIMATE DISPATCHER ---
-# This executes ONLY if the script is not being imported as a module
 if __name__ == "__main__":
-    # Check for the Streamlit environment variable FIRST
+    # Check if we are in Streamlit Cloud environment
     if "STREAMLIT_SERVER_ADDR" in os.environ:
         run_web_app()
+    # Check if we are running locally but via 'streamlit run'
+    elif any("streamlit" in arg for arg in sys.argv):
+        run_web_app()
+    # Otherwise, try the local terminal engine
     else:
+        run_local_engine()
