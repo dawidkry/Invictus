@@ -4,7 +4,7 @@ import sys
 import psutil
 import time
 
-# --- 1. CORE MATH (Safe Everywhere) ---
+# --- 1. CORE MATH (Shared) ---
 def calculate_entropy(data):
     if not data: return 0.0
     occurences = [0] * 256
@@ -16,12 +16,11 @@ def calculate_entropy(data):
             entropy -= p_x * math.log(p_x, 2)
     return round(entropy, 2)
 
-# --- 2. THE WEB INTERFACE (Cloud Optimized) ---
+# --- 2. THE WEB INTERFACE ---
 def run_web_app():
     import streamlit as st
     st.set_page_config(page_title="Invictus AI", page_icon="🛡️")
     st.title("🛡️ Invictus AI: Cloud Analyzer")
-    st.markdown("### Structural Malware Detection Engine")
     
     st.info("System Protection Mode is active for local terminal users.")
     
@@ -36,9 +35,9 @@ def run_web_app():
         else:
             st.success("✅ STRUCTURE NORMAL: Data appears standard.")
 
-# --- 3. THE TERMINAL ENGINE (Stealth Mode) ---
+# --- 3. THE TERMINAL ENGINE ---
 def run_local_engine():
-    # If there is no keyboard (stdin), exit immediately to prevent cloud hanging
+    # Only run if a real keyboard is detected
     if not sys.stdin or not sys.stdin.isatty():
         return
 
@@ -76,14 +75,17 @@ def run_local_engine():
     except (EOFError, KeyboardInterrupt):
         pass
 
-# --- 4. THE ULTIMATE DISPATCHER ---
+# --- 4. THE BOOTSTRAP ---
 if __name__ == "__main__":
-    # Check if we are in Streamlit Cloud environment
-    if "STREAMLIT_SERVER_ADDR" in os.environ:
+    # Check if we are running through Streamlit
+    # This detects 'streamlit' in the command line or the server address
+    is_streamlit = (
+        "STREAMLIT_SERVER_ADDR" in os.environ or 
+        any("streamlit" in arg for arg in sys.argv) or
+        not sys.stdin.isatty() # If no keyboard, it's almost certainly the cloud
+    )
+
+    if is_streamlit:
         run_web_app()
-    # Check if we are running locally but via 'streamlit run'
-    elif any("streamlit" in arg for arg in sys.argv):
-        run_web_app()
-    # Otherwise, try the local terminal engine
     else:
         run_local_engine()
