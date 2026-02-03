@@ -2,9 +2,9 @@ import os
 import math
 import psutil
 import sys
+import time
 
-# --- 1. SHARED CORE LOGIC ---
-# (Safe to be at top level)
+# --- 1. CORE LOGIC (Safe) ---
 def calculate_entropy(data):
     if not data: return 0.0
     occurences = [0] * 256
@@ -16,62 +16,64 @@ def calculate_entropy(data):
             entropy -= p_x * math.log(p_x, 2)
     return round(entropy, 2)
 
-# --- 2. WEB UI (The Cloud Face) ---
-def run_web_ui():
+# --- 2. THE WEB INTERFACE (Cloud-Only) ---
+def start_web_dashboard():
     import streamlit as st
     st.set_page_config(page_title="Invictus AI", page_icon="🛡️")
     st.title("🛡️ Invictus AI: Cloud Analyzer")
+    st.info("Cloud Mode: Terminal functions (Folder Scan/Live Shield) are disabled for security.")
     
-    uploaded = st.file_uploader("Upload suspicious file (200MB Max)", type=['exe', 'dll', 'zip'])
+    uploaded = st.file_uploader("Upload suspicious file", type=['exe', 'dll', 'zip'])
     if uploaded:
         bytes_data = uploaded.read()
         score = calculate_entropy(bytes_data)
         st.metric("Entropy Score", f"{score} / 8.0")
         if score > 7.2:
-            st.error("🚨 HIGH ENTROPY: This file looks encrypted or packed (Common Malware).")
+            st.error("🚨 CRITICAL: High randomness detected. This suggests encryption or packing.")
         else:
-            st.success("✅ STRUCTURE NORMAL: File appears standard.")
+            st.success("✅ STRUCTURE NORMAL: File content appears standard.")
 
-# --- 3. LOCAL ENGINE (The Terminal Protector) ---
-# We wrap everything in a function so Streamlit doesn't run it by mistake
-def run_terminal_engine():
+# --- 3. THE TERMINAL ENGINE (Local-Only) ---
+def start_local_engine():
+    # We only import colorama here so the cloud doesn't need to load it if not used
     from colorama import Fore, init
-    import time
     init(autoreset=True)
+    print(f"{Fore.CYAN}INVICTUS LOCAL ENGINE ACTIVATED")
+    print("1. Deep Folder Scan\n2. Real-time Shield")
     
-    print(f"{Fore.CYAN}INVICTUS AI: LOCAL ENGINE")
-    print("1. Scan Folder\n2. Live Shield")
-    
+    # We wrap the blocking calls in a try-except
     try:
-        choice = input("\nSelect Option > ") # THIS IS THE PART THAT HANGS CLOUD
-        if choice == "1":
-            target = input("Enter path: ")
-            if os.path.exists(target):
-                for root, _, files in os.walk(target):
+        mode = input("\nSelect Mode > ")
+        if mode == "1":
+            folder = input("Folder Path: ")
+            if os.path.exists(folder):
+                for r, _, files in os.walk(folder):
                     for f in files:
-                        fp = os.path.join(root, f)
+                        fp = os.path.join(r, f)
                         try:
                             with open(fp, "rb") as b:
                                 if calculate_entropy(b.read()) > 7.4:
-                                    print(f"{Fore.RED}[!] THREAT: {fp}")
+                                    print(f"{Fore.RED}[!] WARNING: {fp}")
                         except: continue
-        elif choice == "2":
-            print(f"{Fore.GREEN}Shield Active... (Ctrl+C to stop)")
+        elif mode == "2":
+            print(f"{Fore.GREEN}Shielding... (Ctrl+C to stop)")
             while True:
                 for p in psutil.process_iter(['name', 'cpu_percent']):
                     try:
                         if p.info['cpu_percent'] > 50:
-                            print(f"High Load: {p.info['name']}")
+                            print(f"Alert: {p.info['name']} usage high.")
                     except: continue
                 time.sleep(2)
     except KeyboardInterrupt:
-        print("\nExiting...")
+        print("\nEngine Standby.")
 
-# --- 4. THE FAIL-SAFE BOOTSTRAP ---
+# --- 4. THE FAIL-SAFE DISPATCHER ---
 if __name__ == "__main__":
-    # If the script is run via 'streamlit run', it will have 'streamlit' in the command
-    if "streamlit" in sys.argv[0] or (len(sys.argv) > 1 and sys.argv[1] == "run"):
-        run_web_ui()
+    # If "streamlit" is anywhere in the process arguments, it's the web app.
+    # Otherwise, it's you running it in the terminal.
+    is_cloud = any("streamlit" in arg.lower() for arg in sys.argv)
+    
+    if is_cloud:
+        start_web_dashboard()
     else:
-        # ONLY runs if you do 'python invictus.py'
-        run_terminal_engine()
+        start_local_engine()
