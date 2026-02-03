@@ -4,11 +4,12 @@ import sys
 import psutil
 import time
 
-# --- 1. CORE MATH (Safe everywhere) ---
+# --- 1. CORE LOGIC (Safe & Shared) ---
 def calculate_entropy(data):
     if not data: return 0.0
     occurences = [0] * 256
-    for byte in data: occurences[byte] += 1
+    for byte in data:
+        occurences[byte] += 1
     entropy = 0
     for x in occurences:
         if x > 0:
@@ -16,40 +17,44 @@ def calculate_entropy(data):
             entropy -= p_x * math.log(p_x, 2)
     return round(entropy, 2)
 
-# --- 2. THE WEB INTERFACE (Cloud-Friendly) ---
+# --- 2. THE WEB INTERFACE (The Only Part the Cloud Sees) ---
 def run_web_app():
     import streamlit as st
     st.set_page_config(page_title="Invictus AI", page_icon="🛡️")
     st.title("🛡️ Invictus AI: Cloud Analyzer")
-    st.info("System Shielding is active in Local Mode. Upload a file below for Cloud Analysis.")
     
-    uploaded = st.file_uploader("Upload file for Deep Scan", type=['exe', 'dll', 'zip'])
+    st.info("Local Protection Engine is available when running offline.")
+    
+    uploaded = st.file_uploader("Upload file for analysis", type=['exe', 'dll', 'zip'])
     if uploaded:
-        bytes_data = uploaded.read()
-        score = calculate_entropy(bytes_data)
+        file_bytes = uploaded.read()
+        score = calculate_entropy(file_bytes)
         st.metric("Entropy Score", f"{score} / 8.0")
+        
         if score > 7.2:
             st.error("🚨 HIGH ENTROPY: Structural randomness suggests malicious packing.")
         else:
             st.success("✅ STRUCTURE NORMAL: File appears standard.")
 
-# --- 3. THE TERMINAL ENGINE (Hidden from Cloud) ---
+# --- 3. THE TERMINAL ENGINE (Tucked Away) ---
 def run_local_engine():
-    # We use 'getattr' to call input so the Streamlit scanner doesn't see the word
-    get_input = getattr(__builtins__, 'input')
-    
-    from colorama import Fore, init
-    init(autoreset=True)
-    
-    print(f"{Fore.CYAN}INVICTUS AI: LOCAL ENGINE")
+    # Only import colorama here
+    try:
+        from colorama import Fore, init
+        init(autoreset=True)
+    except:
+        class Fore: CYAN=GREEN=RED=YELLOW=WHITE=""
+
+    print(f"{Fore.CYAN}--- INVICTUS AI: LOCAL ENGINE ---")
     print("1. Scan Folder | 2. Live Shield")
     
     try:
-        mode = get_input("\nSelect Mode > ")
+        # We use standard input here; it's safe because of the logic gate below
+        mode = input("\nSelect Mode > ")
         if mode == "1":
-            folder = get_input("Enter Path: ")
-            if os.path.exists(folder):
-                for r, _, files in os.walk(folder):
+            path = input("Enter path: ")
+            if os.path.exists(path):
+                for r, _, files in os.walk(path):
                     for f in files:
                         fp = os.path.join(r, f)
                         try:
@@ -63,23 +68,24 @@ def run_local_engine():
                 for p in psutil.process_iter(['name', 'cpu_percent']):
                     try:
                         if p.info['cpu_percent'] > 50:
-                            print(f"Alert: {p.info['name']} usage high.")
+                            print(f"High Load: {p.info['name']}")
                     except: continue
                 time.sleep(2)
-    except KeyboardInterrupt:
+    except EOFError:
+        # This catches the specific error Streamlit throws when it hits 'input'
         pass
+    except KeyboardInterrupt:
+        print("\nExiting...")
 
-# --- 4. THE FAIL-SAFE DISPATCHER ---
+# --- 4. THE ULTIMATE LOGIC GATE ---
 if __name__ == "__main__":
-    # If the first argument is "invictus.py", it's a local run.
-    # Streamlit usually passes its own internal arguments.
-    is_local = len(sys.argv) == 1 or not sys.argv[0].endswith('streamlit')
-    
-    # Check for the Streamlit environment variable
+    # If the environment variable exists, we are 100% in the Cloud.
     if "STREAMLIT_SERVER_ADDR" in os.environ:
         run_web_app()
-    elif is_local:
-        run_local_engine()
     else:
-        # Fallback for cloud deployment
-        run_web_app()
+        # Check if we are being run by the streamlit CLI
+        if any("streamlit" in arg for arg in sys.argv):
+            run_web_app()
+        else:
+            # We are definitely local
+            run_local_engine()
