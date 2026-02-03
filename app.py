@@ -4,7 +4,7 @@ import sys
 import psutil
 import time
 
-# --- 1. CORE MATH (The "Malware DNA" Scanner) ---
+# --- 1. CORE MATH (Shared) ---
 def calculate_entropy(data):
     if not data: return 0.0
     occurences = [0] * 256
@@ -16,12 +16,27 @@ def calculate_entropy(data):
             entropy -= p_x * math.log(p_x, 2)
     return round(entropy, 2)
 
-# --- 2. THE WEB INTERFACE (For quick 200MB Cloud Checks) ---
+# --- 2. THE WEB INTERFACE (With Hidden UI) ---
 def run_web_app():
     import streamlit as st
     st.set_page_config(page_title="Invictus AI", page_icon="🛡️")
+
+    # --- CSS TO HIDE TOP RIGHT BUTTONS ---
+    hide_ui_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stDeployButton {display:none;}
+        [data-testid="stToolbar"] {display:none;}
+        [data-testid="stDecoration"] {display:none;}
+        [data-testid="stStatusWidget"] {display:none;}
+        </style>
+    """
+    st.markdown(hide_ui_style, unsafe_allow_html=True)
+
     st.title("🛡️ Invictus AI: Cloud Analyzer")
-    st.info("⚠️ Browser Limit: 200MB. For full system scanning (no limits), run this file locally via Terminal.")
+    st.info("⚠️ Browser Limit: 200MB. For unlimited local scanning, run via Terminal.")
     
     uploaded = st.file_uploader("Upload suspicious file", type=['exe', 'dll', 'zip'])
     if uploaded:
@@ -33,9 +48,8 @@ def run_web_app():
         else:
             st.success("✅ STRUCTURE NORMAL: File appears standard.")
 
-# --- 3. THE TERMINAL ENGINE (For Unlimited Local Scanning) ---
+# --- 3. THE TERMINAL ENGINE (Local Engine) ---
 def run_local_engine():
-    # Only run if a real keyboard is detected (Standard for local PC)
     if not sys.stdin or not sys.stdin.isatty():
         return
 
@@ -60,7 +74,6 @@ def run_local_engine():
                         fp = os.path.join(r, f)
                         try:
                             with open(fp, "rb") as b:
-                                # We read the file in chunks locally to handle massive files
                                 if calculate_entropy(b.read()) > 7.4:
                                     print(f"{Fore.RED}[🚨 THREAT] {fp}")
                         except: continue
