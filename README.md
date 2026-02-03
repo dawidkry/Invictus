@@ -60,3 +60,6 @@ python invictus.py
 Distributed under the MIT License. See LICENSE for more information.
 
 Developed by Dawid Krynicki | The Future of Autonomous Defense
+
+
+Copyright (c) 2026 dawidkry
